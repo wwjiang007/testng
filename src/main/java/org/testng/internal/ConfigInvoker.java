@@ -109,7 +109,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
   /**
    * Filter all the beforeGroups methods and invoke only those that apply to the current test
    * method
-   * @param arguments
+   * @param arguments - A {@link GroupConfigMethodArguments} object.
    */
   public void invokeBeforeGroupsConfigurations(GroupConfigMethodArguments arguments) {
     if (arguments.isGroupFilteringDisabled()) {
@@ -131,13 +131,20 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
     // Invoke the right groups methods
     //
     if (beforeMethodsArray.length > 0) {
+      ITestNGMethod[] filteredConfigurations = Arrays.stream(beforeMethodsArray)
+          .filter(ConfigInvoker::isGroupLevelConfigurationMethod)
+          .toArray(ITestNGMethod[]::new);
+      if (filteredConfigurations.length == 0) {
+        return;
+      }
       // don't pass the IClass or the instance as the method may be external
       // the invocation must be similar to @BeforeTest/@BeforeSuite
       ConfigMethodArguments configMethodArguments = new Builder()
-          .usingConfigMethodsAs(beforeMethodsArray)
+          .usingConfigMethodsAs(filteredConfigurations)
           .forSuite(arguments.getSuite())
           .usingParameters(arguments.getParameters())
           .usingInstance(arguments.getInstance())
+          .forTestMethod(arguments.getTestMethod())
           .build();
       invokeConfigurations(configMethodArguments);
     }
@@ -146,6 +153,10 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
     // Remove them so they don't get run again
     //
     arguments.getGroupMethods().removeBeforeGroups(groups);
+  }
+
+  private static boolean isGroupLevelConfigurationMethod(ITestNGMethod itm) {
+    return itm.hasBeforeGroupsConfiguration() || itm.hasAfterGroupsConfiguration();
   }
 
   public void invokeAfterGroupsConfigurations(GroupConfigMethodArguments arguments) {
@@ -192,14 +203,21 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
     }
 
     // Got our afterMethods, invoke them
-    ITestNGMethod[] afterMethodsArray = afterMethods.keySet().toArray(new ITestNGMethod[0]);
+    ITestNGMethod[] filteredConfigurations = afterMethods.keySet()
+        .stream()
+        .filter(ConfigInvoker::isGroupLevelConfigurationMethod)
+        .toArray(ITestNGMethod[]::new);
+    if (filteredConfigurations.length == 0) {
+      return;
+    }
     // don't pass the IClass or the instance as the method may be external
     // the invocation must be similar to @BeforeTest/@BeforeSuite
     ConfigMethodArguments configMethodArguments = new Builder()
-        .usingConfigMethodsAs(afterMethodsArray)
+        .usingConfigMethodsAs(filteredConfigurations)
         .forSuite(arguments.getSuite())
         .usingParameters(arguments.getParameters())
         .usingInstance(arguments.getInstance())
+        .forTestMethod(arguments.getTestMethod())
         .build();
 
     invokeConfigurations(configMethodArguments);
@@ -291,7 +309,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
                 arguments.getTestMethodResult());
         testResult.setParameters(parameters);
 
-        runConfigurationListeners(testResult, true /* before */);
+        runConfigurationListeners(testResult, arguments.getTestMethod(), true /* before */);
 
         Object newInstance = computeInstance(arguments.getInstance(), inst, tm);
         if (isConfigMethodEligibleForScrutiny(tm)) {
@@ -303,7 +321,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
         }
         copyAttributesFromNativelyInjectedTestResult(parameters,
             arguments.getTestMethodResult());
-        runConfigurationListeners(testResult, false /* after */);
+        runConfigurationListeners(testResult, arguments.getTestMethod(), false /* after */);
       } catch (Throwable ex) {
         handleConfigurationFailure(
             ex, tm, testResult, configurationAnnotation,
@@ -377,13 +395,13 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
         : m_configuration.getConfigurable();
   }
 
-
-  private void runConfigurationListeners(ITestResult tr, boolean before) {
+  private void runConfigurationListeners(ITestResult tr, ITestNGMethod tm, boolean before) {
     if (before) {
-      TestListenerHelper.runPreConfigurationListeners(tr, m_notifier.getConfigurationListeners());
+      TestListenerHelper.runPreConfigurationListeners(tr, tm, m_notifier.getConfigurationListeners());
     } else {
-      TestListenerHelper.runPostConfigurationListeners(tr, m_notifier.getConfigurationListeners());
+      TestListenerHelper.runPostConfigurationListeners(tr, tm, m_notifier.getConfigurationListeners());
     }
+
   }
 
   /**
@@ -399,7 +417,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
     recordConfigurationInvocationFailed(
         tm, testResult.getTestClass(), annotation, currentTestMethod, instance, suite);
     testResult.setStatus(ITestResult.SKIP);
-    runConfigurationListeners(testResult, false /* after */);
+    runConfigurationListeners(testResult, currentTestMethod, false /* after */);
   }
 
   private boolean hasConfigFailure(ITestNGMethod currentTestMethod) {
@@ -431,7 +449,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
             + cause.getMessage());
     handleException(cause, tm, testResult, 1);
     testResult.setStatus(ITestResult.FAILURE);
-    runConfigurationListeners(testResult, false /* after */);
+    runConfigurationListeners(testResult, currentTestMethod, false /* after */);
 
     //
     // If in TestNG mode, need to take a look at the annotation to figure out
@@ -484,6 +502,9 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
   }
 
   private void setMethodInvocationFailure(ITestNGMethod method, Object instance) {
+    if (method == null) {
+      return;
+    }
     Set<Object> instances =
         m_methodInvocationResults.computeIfAbsent(method, k -> Sets.newHashSet());
     instances.add(TestNgMethodUtils.getMethodInvocationToken(method, instance));

@@ -10,10 +10,13 @@ import org.testng.annotations.Test;
 import org.testng.xml.Parser;
 import org.testng.xml.XmlSuite;
 
+import org.testng.xml.XmlTest;
 import test.annotationtransformer.issue1790.TestClassSample1;
 import test.annotationtransformer.issue1790.TestClassSample2;
 import test.annotationtransformer.issue1790.TransformerImpl;
 import test.SimpleBaseTest;
+import test.annotationtransformer.issue2312.RetryListener;
+import test.annotationtransformer.issue2312.SampleTestClass;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
@@ -176,13 +179,15 @@ public class AnnotationTransformerTest extends SimpleBaseTest {
     Assert.assertEquals(tla.getPassedTests().size(), 1);
   }
 
+  public static class CustomizedTestListenerAdaptor extends TestListenerAdapter {}
+
   @Test(description = "GITHUB-2138")
   public void verifyAnnotationTransformerInvocationForAllApplicableEvents() {
     TestNG tng = create();
     FactoryTransformer transformer = new FactoryTransformer();
     tng.addListener(transformer);
     tng.setTestClasses(new Class[] {AnnotationTransformerFactorySampleTest.class});
-    TestListenerAdapter tla = new TestListenerAdapter();
+    CustomizedTestListenerAdaptor tla = new CustomizedTestListenerAdaptor();
     tng.addListener(tla);
 
     tng.run();
@@ -197,6 +202,7 @@ public class AnnotationTransformerTest extends SimpleBaseTest {
     };
     assertThat(transformer.getLogs()).containsExactly(expectedLogs);
   }
+
 
   @Test(description = "Test for issue #605")
   public void verifyInvocationCountTransformer() {
@@ -257,5 +263,15 @@ public class AnnotationTransformerTest extends SimpleBaseTest {
     assertThat(transformer.getClasses()).hasSize(2);
     assertThat(transformer.getConstructors()).isEmpty();
     assertThat(transformer.getMethods()).hasSize(2);
+  }
+
+  @Test(description = "GITHUB-2312")
+  public void ensureAnnotationTransformerIsNotInvokedMultipleTimes() {
+    XmlTest myTest = createXmlTest("sample_suite", "sample_test", SampleTestClass.class);
+    myTest.getSuite().addListener(RetryListener.class.getName());
+    TestNG myTestNG = create(myTest.getSuite());
+    myTestNG.run();
+    int retried = RetryListener.getExecutionCount();
+    assertThat(retried).isEqualTo(1);
   }
 }

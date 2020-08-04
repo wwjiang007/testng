@@ -12,9 +12,6 @@ import org.testng.collections.Maps;
 import org.testng.internal.RuntimeBehavior;
 import org.testng.internal.Utils;
 import org.testng.util.Strings;
-import org.testng.xml.dom.OnElement;
-import org.testng.xml.dom.OnElementList;
-import org.testng.xml.dom.Tag;
 
 import static org.testng.xml.XmlSuite.ParallelMode.skipDeprecatedValues;
 
@@ -252,7 +249,10 @@ public class XmlSuite implements Cloneable {
     m_objectFactory = objectFactory;
   }
 
-  /** @deprecated Use #setParallel(XmlSuite.ParallelMode) instead */
+  /**
+   * @param parallel The String value
+   * @deprecated Use #setParallel(XmlSuite.ParallelMode) instead
+   */
   @Deprecated
   public void setParallel(String parallel) {
     if (parallel == null) {
@@ -419,7 +419,7 @@ public class XmlSuite implements Cloneable {
   }
 
   /**
-   * Gets the parameters that apply to tests in this suite.<br>
+   * @return the parameters that apply to tests in this suite.<br>
    * The set of parameters for a suite is appended with parameters from the parent suite. Also, parameters
    * from this suite override the same named parameters from the parent suite.
    */
@@ -518,7 +518,6 @@ public class XmlSuite implements Cloneable {
     return getXmlPackages();
   }
 
-  @Tag(name = "method-selectors")
   public void setMethodSelectors(XmlMethodSelectors xms) {
     m_xmlMethodSelectors = xms;
   }
@@ -538,7 +537,6 @@ public class XmlSuite implements Cloneable {
     return m_listeners;
   }
 
-  @Tag(name = "method-selectors")
   public void setXmlMethodSelectors(XmlMethodSelectors xms) {
     m_xmlMethodSelectors = xms;
   }
@@ -857,7 +855,10 @@ public class XmlSuite implements Cloneable {
     return true;
   }
 
-  /** @deprecated Use {@link #setPreserveOrder(Boolean)} instead */
+  /**
+   * @param f The String value
+   * @deprecated Use {@link #setPreserveOrder(Boolean)} instead
+   */
   @Deprecated
   public void setPreserveOrder(String f) {
     setPreserveOrder(Boolean.valueOf(f));
@@ -944,35 +945,22 @@ public class XmlSuite implements Cloneable {
     m_xmlGroups = xmlGroups;
   }
 
-  @OnElement(
-      tag = "parameter",
-      attributes = {"name", "value"})
   public void onParameterElement(String name, String value) {
     getParameters().put(name, value);
   }
 
-  @OnElementList(
-      tag = "listeners",
-      attributes = {"class-name"})
   public void onListenerElement(String className) {
     addListener(className);
   }
 
-  @OnElementList(
-      tag = "suite-files",
-      attributes = {"path"})
   public void onSuiteFilesElement(String path) {
     getSuiteFiles().add(path);
   }
 
-  @OnElementList(
-      tag = "packages",
-      attributes = {"name"})
   public void onPackagesElement(String name) {
     getPackages().add(new XmlPackage(name));
   }
 
-  //  @OnElementList(tag = "method-selectors", attributes = { "language", "name", "priority" })
   public void onMethodSelectorElement(String language, String name, String priority) {
     System.out.println("Language:" + language);
   }

@@ -25,6 +25,7 @@ import org.testng.internal.ExitCode;
 import org.testng.internal.IConfiguration;
 import org.testng.internal.InstanceCreator;
 import org.testng.internal.OverrideProcessor;
+import org.testng.internal.ReporterConfig;
 import org.testng.internal.RuntimeBehavior;
 import org.testng.internal.SuiteRunnerMap;
 import org.testng.internal.Systematiser;
@@ -82,10 +83,10 @@ import static org.testng.xml.XmlSuite.ParallelMode.skipDeprecatedValues;
  * <p>The command line parameters are:
  *
  * <UL>
- *   <LI>-d <TT>outputdir</TT>: specify the output directory
- *   <LI>-testclass <TT>class_name</TT>: specifies one or several class names
- *   <LI>-testjar <TT>jar_name</TT>: specifies the jar containing the tests
- *   <LI>-sourcedir <TT>src1;src2</TT>: ; separated list of source directories (used only when
+ *   <LI>-d <code>outputdir</code>: specify the output directory
+ *   <LI>-testclass <code>class_name</code>: specifies one or several class names
+ *   <LI>-testjar <code>jar_name</code>: specifies the jar containing the tests
+ *   <LI>-sourcedir <code>src1;src2</code>: ; separated list of source directories (used only when
  *       javadoc annotations are used)
  *   <LI>-target
  *   <LI>-groups
@@ -100,6 +101,7 @@ import static org.testng.xml.XmlSuite.ParallelMode.skipDeprecatedValues;
  * @see #usage()
  * @author <a href = "mailto:cedric&#64;beust.com">Cedric Beust</a>
  */
+@SuppressWarnings({"unused", "unchecked", "rawtypes"})
 public class TestNG {
 
   /** This class' log4testng Logger. */
@@ -131,6 +133,8 @@ public class TestNG {
   private Boolean m_isJUnit = XmlSuite.DEFAULT_JUNIT;
   private Boolean m_isMixed = XmlSuite.DEFAULT_MIXED;
   protected boolean m_useDefaultListeners = true;
+  private boolean m_failIfAllTestsSkipped = false;
+  private final List<String> m_listenersToSkipFromBeingWiredIn = new ArrayList<>();
 
   private ITestRunnerFactory m_testRunnerFactory;
 
@@ -156,7 +160,7 @@ public class TestNG {
   private int m_threadCount = -1;
   private XmlSuite.ParallelMode m_parallelMode = null;
   private XmlSuite.FailurePolicy m_configFailurePolicy;
-  private Class[] m_commandLineTestClasses;
+  private Class<?>[] m_commandLineTestClasses;
 
   private String m_defaultSuiteName = DEFAULT_COMMAND_LINE_SUITE_NAME;
   private String m_defaultTestName = DEFAULT_COMMAND_LINE_TEST_NAME;
@@ -216,6 +220,23 @@ public class TestNG {
     m_configuration = new Configuration();
   }
 
+  /**
+   * @param failIfAllTestsSkipped - Whether TestNG should enable/disable failing when all the tests
+   * were skipped and nothing was run (Mostly when a test is powered by a data provider and when the
+   * data provider itself fails causing all tests to skip).
+   */
+  public void toggleFailureIfAllTestsWereSkipped(boolean failIfAllTestsSkipped) {
+    this.m_failIfAllTestsSkipped = failIfAllTestsSkipped;
+  }
+
+  /**
+   * @param listeners - An array of fully qualified class names that should be skipped from being
+   * wired in via service loaders.
+   */
+  public void setListenersToSkipFromBeingWiredInViaServiceLoaders(String... listeners) {
+    m_listenersToSkipFromBeingWiredIn.addAll(Arrays.asList(listeners));
+  }
+
   public int getStatus() {
     if (exitCodeListener.noTestsFound()) {
       return ExitCode.HAS_NO_TEST;
@@ -235,7 +256,7 @@ public class TestNG {
   }
 
   /**
-   * If this method is passed true before run(), the default listeners will not be used.
+   * @param useDefaultListeners If true before run(), the default listeners will not be used.
    *
    * <ul>
    *   <li>org.testng.reporters.TestHTMLReporter
@@ -254,13 +275,13 @@ public class TestNG {
   /**
    * Sets a jar containing a testng.xml file.
    *
-   * @param jarPath
+   * @param jarPath - Path of the jar
    */
   public void setTestJar(String jarPath) {
     m_jarPath = jarPath;
   }
 
-  /** Sets the path to the XML file in the test jar file. */
+  /** @param xmlPathInJar Sets the path to the XML file in the test jar file. */
   public void setXmlPathInJar(String xmlPathInJar) {
     m_xmlPathInJar = xmlPathInJar;
   }
@@ -382,7 +403,7 @@ public class TestNG {
     m_suites.addAll(utils.extractSuitesFrom(jarFile));
   }
 
-  /** Define the number of threads in the thread pool. */
+  /** @param threadCount Define the number of threads in the thread pool. */
   public void setThreadCount(int threadCount) {
     if (threadCount < 1) {
       exitWithError("Cannot use a threadCount parameter less than 1; 1 > " + threadCount);
@@ -392,8 +413,7 @@ public class TestNG {
   }
 
   /**
-   * Define whether this run will be run in parallel mode.
-   *
+   * @param parallel Define whether this run will be run in parallel mode.
    * @deprecated Use #setParallel(XmlSuite.ParallelMode) instead
    */
   @Deprecated
@@ -501,7 +521,7 @@ public class TestNG {
     IAnnotationFinder finder = m_configuration.getAnnotationFinder();
 
     for (int i = 0; i < classes.length; i++) {
-      Class c = classes[i];
+      Class<?> c = classes[i];
       ITestAnnotation test = finder.findAnnotation(c, ITestAnnotation.class);
       String suiteName = getDefaultSuiteName();
       String testName = getDefaultTestName();
@@ -560,9 +580,9 @@ public class TestNG {
    * the specified TestNG suite xml files. If a file is missing, it is ignored.
    *
    * @param suites A list of paths to one more XML files defining the tests. For example:
-   *     <pre>
+   * <pre>
    * TestNG tng = new TestNG();
-   * List<String> suites = Lists.newArrayList();
+   * List&lt;String&gt; suites = Lists.newArrayList();
    * suites.add("c:/tests/testng1.xml");
    * suites.add("c:/tests/testng2.xml");
    * tng.setTestSuites(suites);
@@ -576,7 +596,7 @@ public class TestNG {
   /**
    * Specifies the XmlSuite objects to run.
    *
-   * @param suites
+   * @param suites - The list of {@link XmlSuite} objects.
    * @see org.testng.xml.XmlSuite
    */
   public void setXmlSuites(List<XmlSuite> suites) {
@@ -629,7 +649,10 @@ public class TestNG {
     }
   }
 
-  /** @deprecated Use addListener(ITestNGListener) instead */
+  /**
+   * @param listener The listener to add
+   * @deprecated Use addListener(ITestNGListener) instead
+   */
   // TODO remove later /!\ Caution: IntelliJ is using it. Check with @akozlova before removing it
   @Deprecated
   public void addListener(Object listener) {
@@ -871,6 +894,9 @@ public class TestNG {
   }
 
   private void initializeDefaultListeners() {
+    if (m_failIfAllTestsSkipped) {
+      this.exitCodeListener.failIfAllTestsSkipped();
+    }
     addListener(this.exitCodeListener);
     if (m_useDefaultListeners) {
       addReporter(SuiteHTMLReporter.class);
@@ -960,6 +986,10 @@ public class TestNG {
             : ServiceLoader.load(ITestNGListener.class);
     for (ITestNGListener l : loader) {
       Utils.log("[TestNG]", 2, "Adding ServiceLoader listener:" + l);
+      if (m_listenersToSkipFromBeingWiredIn.contains(l.getClass().getName())) {
+        Utils.log("[TestNG]", 2, "Skipping adding the listener :" + l);
+        continue;
+      }
       addListener(l);
       addServiceLoaderListener(l);
     }
@@ -1080,6 +1110,7 @@ public class TestNG {
 
   /**
    * This needs to be public for maven2, for now..At least until an alternative mechanism is found.
+   * @return The locally run suites
    */
   public List<ISuite> runSuitesLocally() {
     if (m_suites.isEmpty()) {
@@ -1307,6 +1338,10 @@ public class TestNG {
 
   /**
    * <B>Note</B>: this method is not part of the public API and is meant for internal usage only.
+   *
+   * @param argv The param arguments
+   * @param listener The listener
+   * @return The TestNG instance
    */
   public static TestNG privateMain(String[] argv, ITestListener listener) {
     TestNG result = new TestNG();
@@ -1346,10 +1381,20 @@ public class TestNG {
     return result;
   }
 
-  /** Configure the TestNG instance based on the command line parameters. */
+  /**
+   * Configure the TestNG instance based on the command line parameters.
+   *
+   * @param cla The command line parameters
+   */
   protected void configure(CommandLineArgs cla) {
     if (cla.verbose != null) {
       setVerbose(cla.verbose);
+    }
+    if (cla.dependencyInjectorFactoryClass != null) {
+      Class<?> clazz = ClassHelper.forName(cla.dependencyInjectorFactoryClass);
+      if (clazz != null && IInjectorFactory.class.isAssignableFrom(clazz)) {
+        m_configuration.setInjectorFactory(InstanceCreator.newInstance((Class<IInjectorFactory>) clazz));
+      }
     }
     if (cla.threadPoolFactoryClass != null) {
       setExecutorFactoryClass(cla.threadPoolFactoryClass);
@@ -1359,7 +1404,7 @@ public class TestNG {
     String testClasses = cla.testClass;
     if (null != testClasses) {
       String[] strClasses = testClasses.split(",");
-      List<Class> classes = Lists.newArrayList();
+      List<Class<?>> classes = Lists.newArrayList();
       for (String c : strClasses) {
         classes.add(ClassHelper.fileToClass(c));
       }
@@ -1386,6 +1431,9 @@ public class TestNG {
     setJUnit(cla.junit);
     setMixed(cla.mixed);
     setSkipFailedInvocationCounts(cla.skipFailedInvocationCounts);
+    toggleFailureIfAllTestsWereSkipped(cla.failIfAllTestsSkipped);
+    setListenersToSkipFromBeingWiredInViaServiceLoaders(cla.spiListenersToSkip.split(","));
+
     if (cla.parallelMode != null) {
       setParallel(cla.parallelMode);
     }
@@ -1445,8 +1493,8 @@ public class TestNG {
       setTestRunnerFactoryClass(ClassHelper.fileToClass(cla.testRunnerFactory));
     }
 
-    if (cla.reporter != null) {
-      ReporterConfig reporterConfig = ReporterConfig.deserialize(cla.reporter);
+    ReporterConfig reporterConfig = ReporterConfig.deserialize(cla.reporter);
+    if (reporterConfig != null) {
       addReporter(reporterConfig);
     }
 
@@ -1482,7 +1530,10 @@ public class TestNG {
   /**
    * This method is invoked by Maven's Surefire, only remove it once Surefire has been modified to
    * no longer call it.
+   * @param path The path
+   * @deprecated
    */
+  @Deprecated
   public void setSourcePath(String path) {
     // nop
   }
@@ -1504,6 +1555,7 @@ public class TestNG {
    * This method is invoked by Maven's Surefire to configure the runner, do not remove unless you
    * know for sure that Surefire has been updated to use the new configure(CommandLineArgs) method.
    *
+   * @param cmdLineArgs The command line
    * @deprecated use new configure(CommandLineArgs) method
    */
   @SuppressWarnings({"unchecked"})
@@ -1540,6 +1592,9 @@ public class TestNG {
     result.mixed = (Boolean) cmdLineArgs.get(CommandLineArgs.MIXED);
     result.skipFailedInvocationCounts =
         (Boolean) cmdLineArgs.get(CommandLineArgs.SKIP_FAILED_INVOCATION_COUNTS);
+    result.failIfAllTestsSkipped = Boolean.parseBoolean(
+        cmdLineArgs.getOrDefault(CommandLineArgs.FAIL_IF_ALL_TESTS_SKIPPED, Boolean.FALSE).toString());
+    result.spiListenersToSkip = (String) cmdLineArgs.getOrDefault(CommandLineArgs.LISTENERS_TO_SKIP_VIA_SPI, "");
     String parallelMode = (String) cmdLineArgs.get(CommandLineArgs.PARALLEL);
     if (parallelMode != null) {
       result.parallelMode = XmlSuite.ParallelMode.getValidParallel(parallelMode);
@@ -1602,10 +1657,15 @@ public class TestNG {
       result.suiteThreadPoolSize = value;
     }
 
+    String dependencyInjectorFactoryClass = (String) cmdLineArgs.get(CommandLineArgs.DEPENDENCY_INJECTOR_FACTORY);
+    if (dependencyInjectorFactoryClass != null) {
+      result.dependencyInjectorFactoryClass = dependencyInjectorFactoryClass;
+    }
+
     configure(result);
   }
 
-  /** Only run the specified tests from the suite. */
+  /** @param testNames Only run the specified tests from the suite. */
   public void setTestNames(List<String> testNames) {
     m_testNames = testNames;
   }
@@ -1626,13 +1686,13 @@ public class TestNG {
   /**
    * Specify if this run should be made in JUnit mode
    *
-   * @param isJUnit
+   * @param isJUnit - Specify if this run should be made in JUnit mode
    */
   public void setJUnit(Boolean isJUnit) {
     m_isJUnit = isJUnit;
   }
 
-  /** Specify if this run should be made in mixed mode */
+  /** @param isMixed Specify if this run should be made in mixed mode */
   public void setMixed(Boolean isMixed) {
     if (isMixed == null) {
       return;
@@ -1640,7 +1700,11 @@ public class TestNG {
     m_isMixed = isMixed;
   }
 
-  /** Double check that the command line parameters are valid. */
+  /**
+   * Double check that the command line parameters are valid.
+   *
+   * @param args The command line to check
+   */
   protected static void validateCommandLineParameters(CommandLineArgs args) {
     String testClasses = args.testClass;
     List<String> testNgXml = args.suiteFiles;
@@ -1751,7 +1815,10 @@ public class TestNG {
   }
 
   // DEPRECATED: to be removed after a major version change
-  /** @deprecated since 5.1 */
+  /**
+   * @return The default instance
+   * @deprecated since 5.1
+   */
   @Deprecated
   public static TestNG getDefault() {
     return m_instance;
@@ -1781,7 +1848,11 @@ public class TestNG {
     m_dataProviderThreadCount = count;
   }
 
-  /** Add a class loader to the searchable loaders. */
+  /**
+   * Add a class loader to the searchable loaders.
+   *
+   * @param loader The class loader to add
+   */
   public void addClassLoader(final ClassLoader loader) {
     if (loader != null) {
       ClassHelper.addClassLoader(loader);
@@ -1835,7 +1906,8 @@ public class TestNG {
     return Lists.newArrayList(serviceLoaderListeners.values());
   }
 
-  //
-  // ServiceLoader testing
-  /////
+  public void setInjectorFactory(IInjectorFactory factory) {
+    this.m_configuration.setInjectorFactory(factory);
+  }
+
 }

@@ -184,6 +184,8 @@ public class AnnotationHelper {
 
   private static void finishInitialize(
       ConfigurationAnnotation result, IConfigurationAnnotation bs) {
+    result.setIsBeforeGroups(bs.isBeforeGroups());
+    result.setIsAfterGroups(bs.isAfterGroups());
     result.setFakeConfiguration(true);
     result.setAlwaysRun(bs.getAlwaysRun());
     result.setDependsOnGroups(bs.getDependsOnGroups());
@@ -199,7 +201,7 @@ public class AnnotationHelper {
     return ALL_ANNOTATIONS;
   }
 
-  /** Delegation method for creating the list of <CODE>ITestMethod</CODE>s to be analysed. */
+  /* Delegation method for creating the list of <CODE>ITestMethod</CODE>s to be analysed. */
   public static ITestNGMethod[] findMethodsWithAnnotation(
       Class<?> rootClass,
       Class<? extends IAnnotation> annotationClass,

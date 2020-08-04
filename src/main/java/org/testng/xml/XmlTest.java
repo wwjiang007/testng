@@ -4,7 +4,6 @@ import org.testng.TestNG;
 import org.testng.TestNGException;
 import org.testng.collections.Lists;
 import org.testng.collections.Maps;
-import org.testng.xml.dom.ParentSetter;
 
 import java.util.*;
 
@@ -417,7 +416,7 @@ public class XmlTest implements Cloneable {
   }
 
   /**
-   * Clone the <TT>source</TT> <CODE>XmlTest</CODE> by including: - test attributes - groups
+   * Clone the <code>source</code> <code>XmlTest</code> by including: - test attributes - groups
    * definitions - parameters
    *
    * <p>The &lt;classes&gt; sub element is ignored for the moment.
@@ -446,7 +445,12 @@ public class XmlTest implements Cloneable {
     return result;
   }
 
-  /** Convenience method to cache the ordering numbers for methods. */
+  /**
+   * Convenience method to cache the ordering numbers for methods.
+   *
+   * @param method The method name
+   * @return The invocation numbers of the method
+   */
   public List<Integer> getInvocationNumbers(String method) {
     if (m_failedInvocationNumbers == null) {
       m_failedInvocationNumbers = Maps.newHashMap();
@@ -500,6 +504,8 @@ public class XmlTest implements Cloneable {
    * Note that this attribute does not come from the XML file, it's calculated internally and
    * represents the order in which this test tag was found in its &lt;suite&gt; tag. It's used to
    * calculate the ordering of the tests when preserve-test-order is true.
+   *
+   * @return The value
    */
   public int getIndex() {
     return m_index;
@@ -642,7 +648,6 @@ public class XmlTest implements Cloneable {
     this.m_xmlDependencyGroups = xmlDependencyGroups;
   }
 
-  @ParentSetter
   public void setXmlSuite(XmlSuite suite) {
     m_suite = suite;
   }

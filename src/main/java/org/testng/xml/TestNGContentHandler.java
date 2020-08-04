@@ -1,5 +1,7 @@
 package org.testng.xml;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.testng.ITestObjectFactory;
 import org.testng.TestNGException;
 import org.testng.collections.Lists;
@@ -8,6 +10,7 @@ import org.testng.internal.RuntimeBehavior;
 import org.testng.internal.Utils;
 import org.testng.log4testng.Logger;
 import org.xml.sax.Attributes;
+import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -15,6 +18,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +33,7 @@ import static org.testng.internal.Utils.isStringBlank;
  * @author Cedric Beust
  * @author <a href='mailto:the_mindstorm@evolva.ro'>Alexandru Popescu</a>
  */
+// TODO move to internal
 public class TestNGContentHandler extends DefaultHandler {
   private XmlSuite m_currentSuite = null;
   private XmlTest m_currentTest = null;
@@ -49,6 +55,22 @@ public class TestNGContentHandler extends DefaultHandler {
   private Include m_currentInclude;
   private List<String> m_currentMetaGroup = null;
   private String m_currentMetaGroupName;
+
+  //Borrowed this implementation from this SO post : https://stackoverflow.com/a/29751441/679824
+  private final EntityResolver m_redirectionAwareResolver = (publicId, systemId) -> {
+    URL url = new URL(systemId);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+    int status = conn.getResponseCode();
+    if ((status == HttpURLConnection.HTTP_MOVED_TEMP
+        || status == HttpURLConnection.HTTP_MOVED_PERM
+        || status == HttpURLConnection.HTTP_SEE_OTHER)) {
+
+      String newUrl = conn.getHeaderField("Location");
+      conn = (HttpURLConnection) new URL(newUrl).openConnection();
+    }
+    return new InputSource(conn.getInputStream());
+  };
 
   enum Location {
     SUITE,
@@ -81,26 +103,18 @@ public class TestNGContentHandler extends DefaultHandler {
     m_loadClasses = loadClasses;
   }
 
-  /*
-   * (non-Javadoc)
-   *
-   * @see org.xml.sax.EntityResolver#resolveEntity(java.lang.String,
-   *      java.lang.String)
-   */
   @Override
   public InputSource resolveEntity(String systemId, String publicId)
-      throws IOException, SAXException {
+      throws SAXException, IOException {
+
+    if (publicId == null) {
+      return m_redirectionAwareResolver.resolveEntity(systemId, null);
+    }
     if (Parser.isUnRecognizedPublicId(publicId)) {
-      //The Url is not TestNG recognized
-      boolean isHttps = publicId != null && publicId.trim().toLowerCase().startsWith("https");
-      if (isHttps || RuntimeBehavior.useHttpUrlForDtd()) {
-        return super.resolveEntity(systemId, publicId);
-      } else {
-        String msg = "TestNG by default disables loading DTD from unsecure Urls. " +
-            "If you need to explicitly load the DTD from a http url, please do so " +
-            "by using the JVM argument [-D" + RuntimeBehavior.TESTNG_USE_UNSECURE_URL + "=true]";
-        throw new TestNGException(msg);
+      if (RuntimeBehavior.useSecuredUrlForDtd() && isUnsecuredUrl(publicId)) {
+        throw new TestNGException(RuntimeBehavior.unsecuredUrlDocumentation());
       }
+      return m_redirectionAwareResolver.resolveEntity(systemId, publicId);
     }
     m_validate = true;
     InputStream is = loadDtdUsingClassLoader();
@@ -113,6 +127,17 @@ public class TestNGContentHandler extends DefaultHandler {
             + "\n"
             + "Fetching it from " + Parser.HTTPS_TESTNG_DTD_URL);
     return super.resolveEntity(systemId, Parser.HTTPS_TESTNG_DTD_URL);
+  }
+
+  private static boolean isUnsecuredUrl(String str) {
+    URI uri;
+    try {
+      uri = new URI(str);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+    // scheme is null for local uri
+    return uri.getScheme() != null && uri.getScheme().equals("http");
   }
 
   private InputStream loadDtdUsingClassLoader() {
@@ -346,7 +371,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <classes> */
   public void xmlClasses(boolean start, Attributes attributes) {
     if (start) {
       m_currentClasses = Lists.newArrayList();
@@ -357,7 +381,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <listeners> */
   public void xmlListeners(boolean start, Attributes attributes) {
     if (start) {
       m_listeners = Lists.newArrayList();
@@ -369,7 +392,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <listener> */
   public void xmlListener(boolean start, Attributes attributes) {
     if (start) {
       String listener = attributes.getValue("class-name");
@@ -377,7 +399,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <packages> */
   public void xmlPackages(boolean start, Attributes attributes) {
     if (start) {
       m_currentPackages = Lists.newArrayList();
@@ -403,7 +424,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <method-selectors> */
   public void xmlMethodSelectors(boolean start, Attributes attributes) {
     if (start) {
       m_currentSelectors = new ArrayList<>();
@@ -418,7 +438,6 @@ public class TestNGContentHandler extends DefaultHandler {
     m_currentSelectors = null;
   }
 
-  /** Parse <selector-class> */
   public void xmlSelectorClass(boolean start, Attributes attributes) {
     if (start) {
       m_currentSelector.setName(attributes.getValue("name"));
@@ -430,7 +449,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <method-selector> */
   public void xmlMethodSelector(boolean start, Attributes attributes) {
     if (start) {
       m_currentSelector = new XmlMethodSelector();
@@ -453,7 +471,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <run> */
   public void xmlRun(boolean start, Attributes attributes) {
     if (start) {
       m_currentRuns = Lists.newArrayList();
@@ -469,7 +486,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <group> */
   public void xmlGroup(boolean start, Attributes attributes) {
     if (start) {
       m_currentTest.addXmlDependencyGroup(
@@ -477,7 +493,6 @@ public class TestNGContentHandler extends DefaultHandler {
     }
   }
 
-  /** Parse <groups> */
   public void xmlGroups(boolean start, Attributes attributes) {
     if (start) {
       m_currentGroups = new XmlGroups();

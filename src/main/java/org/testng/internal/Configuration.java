@@ -1,14 +1,18 @@
 package org.testng.internal;
 
-import org.testng.*;
+import java.util.List;
+import java.util.Map;
+import org.testng.IConfigurable;
+import org.testng.IConfigurationListener;
+import org.testng.IExecutionListener;
+import org.testng.IHookable;
+import org.testng.IInjectorFactory;
+import org.testng.ITestObjectFactory;
 import org.testng.collections.Lists;
 import org.testng.collections.Maps;
 import org.testng.internal.annotations.DefaultAnnotationTransformer;
 import org.testng.internal.annotations.IAnnotationFinder;
 import org.testng.internal.annotations.JDK15AnnotationFinder;
-
-import java.util.List;
-import java.util.Map;
 import org.testng.internal.thread.DefaultThreadPoolExecutorFactory;
 import org.testng.thread.IExecutorFactory;
 
@@ -24,6 +28,8 @@ public class Configuration implements IConfiguration {
       m_configurationListeners = Maps.newHashMap();
   private boolean alwaysRunListeners = true;
   private IExecutorFactory m_executorFactory = new DefaultThreadPoolExecutorFactory();
+
+  private IInjectorFactory injectorFactory = new GuiceBackedInjectorFactory();
 
   public Configuration() {
     init(new JDK15AnnotationFinder(new DefaultAnnotationTransformer()));
@@ -116,5 +122,15 @@ public class Configuration implements IConfiguration {
   @Override
   public boolean alwaysRunListeners() {
     return alwaysRunListeners;
+  }
+
+  @Override
+  public void setInjectorFactory(IInjectorFactory factory) {
+    this.injectorFactory = factory;
+  }
+
+  @Override
+  public IInjectorFactory getInjectorFactory() {
+    return this.injectorFactory;
   }
 }

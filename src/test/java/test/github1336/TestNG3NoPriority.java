@@ -5,12 +5,12 @@ import org.testng.annotations.Test;
 public class TestNG3NoPriority extends BaseClass {
   @Test
   public void test1TestNG3() {
-    runTest("http://testng.org/doc/download.html");
+    runTest("https://testng.org/doc/download.html");
   }
 
   @Test
   public void test2TestNG3() {
-    runTest("http://www3.lenovo.com/in/en/");
+    runTest("https://www3.lenovo.com/in/en/");
   }
 
   @Test

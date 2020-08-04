@@ -2,12 +2,11 @@ package org.testng.xml;
 
 import org.testng.TestNGException;
 import org.testng.reporters.XMLStringBuffer;
-import org.testng.xml.dom.OnElement;
 
 import java.util.Properties;
 
 /**
- * This class describes the tag <method-selector> in testng.xml.
+ * This class describes the tag <code>&lt;method-selector&gt;</code> in testng.xml.
  */
 public class XmlMethodSelector {
   // Either this:
@@ -27,9 +26,6 @@ public class XmlMethodSelector {
   }
 
   // For YAML
-  @OnElement(
-      tag = "selector-class",
-      attributes = {"name", "priority"})
   public void setElement(String name, String priority) {
     setName(name);
     setPriority(Integer.parseInt(priority));

@@ -28,6 +28,7 @@ import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.Reporter;
+import org.testng.SkipException;
 import org.testng.SuiteRunState;
 import org.testng.SuiteRunner;
 import org.testng.TestException;
@@ -508,6 +509,9 @@ class TestInvoker extends BaseInvoker implements ITestInvoker {
   private ITestResult invokeMethod(
       TestMethodArguments arguments, XmlSuite suite, FailureContext failureContext) {
     TestResult testResult = TestResult.newEmptyTestResult();
+    testResult.setParameters(arguments.getParameterValues());
+    testResult.setParameterIndex(arguments.getParametersIndex());
+    testResult.setHost(m_testContext.getHost());
 
     GroupConfigMethodArguments cfgArgs = new GroupConfigMethodArguments.Builder()
         .forTestMethod(arguments.getTestMethod())
@@ -533,6 +537,7 @@ class TestInvoker extends BaseInvoker implements ITestInvoker {
       Throwable exception = ExceptionUtils.getExceptionDetails(m_testContext,
           arguments.getInstance());
       ITestResult result = registerSkippedTestResult(arguments.getTestMethod(), System.currentTimeMillis(), exception);
+      result.setParameters(testResult.getParameters());
       TestResult.copyAttributes(testResult, result);
       m_notifier.addSkippedTest(arguments.getTestMethod(), result);
       arguments.getTestMethod().incrementCurrentInvocationCount();
@@ -555,9 +560,6 @@ class TestInvoker extends BaseInvoker implements ITestInvoker {
       invokedMethod = new InvokedMethod(arguments.getInstance(),
           arguments.getTestMethod(), invokedMethod.getDate(), testResult);
 
-      testResult.setParameters(arguments.getParameterValues());
-      testResult.setParameterIndex(arguments.getParametersIndex());
-      testResult.setHost(m_testContext.getHost());
       testResult.setStatus(ITestResult.STARTED);
 
       Reporter.setCurrentTestResult(testResult);
@@ -617,7 +619,11 @@ class TestInvoker extends BaseInvoker implements ITestInvoker {
       setTestStatus(testResult, ITestResult.FAILURE);
     } catch (Throwable thr) { // covers the non-wrapper exceptions
       testResult.setThrowable(thr);
-      setTestStatus(testResult, ITestResult.FAILURE);
+      int status = ITestResult.FAILURE;
+      if (thr instanceof SkipException) {
+        status = ITestResult.SKIP;
+      }
+      setTestStatus(testResult, status);
     } finally {
       // Set end time ASAP
       testResult.setEndMillis(System.currentTimeMillis());

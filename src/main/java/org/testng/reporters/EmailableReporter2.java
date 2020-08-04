@@ -79,8 +79,8 @@ public class EmailableReporter2 implements IReporter {
 
   protected void writeDocumentStart() {
     writer.println(
-        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">");
-    writer.println("<html xmlns=\"http://www.w3.org/1999/xhtml\">");
+        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"https://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">");
+    writer.println("<html xmlns=\"https://www.w3.org/1999/xhtml\">");
   }
 
   protected void writeHead() {
@@ -404,6 +404,7 @@ public class EmailableReporter2 implements IReporter {
         scenarioIndex +=
             writeScenarioDetails(testResult.getSkippedConfigurationResults(), scenarioIndex);
         scenarioIndex += writeScenarioDetails(testResult.getSkippedTestResults(), scenarioIndex);
+        scenarioIndex += writeScenarioDetails(testResult.getRetriedTestResults(), scenarioIndex);
         scenarioIndex += writeScenarioDetails(testResult.getPassedTestResults(), scenarioIndex);
       }
     }
@@ -690,7 +691,12 @@ public class EmailableReporter2 implements IReporter {
       return results.stream().filter(ITestResult::wasRetried).collect(Collectors.toSet());
     }
 
-    /** Groups test results by method and then by class. */
+    /**
+     * Groups test results by method and then by class.
+     *
+     * @param results All test results
+     * @return Test result grouped by method and class
+     */
     protected List<ClassResult> groupResults(Set<ITestResult> results) {
       List<ClassResult> classResults = Lists.newArrayList();
       if (!results.isEmpty()) {
@@ -804,7 +810,12 @@ public class EmailableReporter2 implements IReporter {
       return excludedGroups;
     }
 
-    /** Formats an array of groups for display. */
+    /**
+     * Formats an array of groups for display.
+     *
+     * @param groups The groups
+     * @return The String value of the groups
+     */
     protected String formatGroups(String[] groups) {
       if (groups.length == 0) {
         return "";

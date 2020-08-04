@@ -87,7 +87,11 @@ public class EmailableReporter implements IReporter {
     return new PrintWriter(newBufferedWriter(new File(outdir, fileName).toPath(), UTF_8));
   }
 
-  /** Creates a table showing the highlights of each test method with links to the method details */
+  /**
+   * Creates a table showing the highlights of each test method with links to the method details
+   *
+   * @param suites The run suites
+   */
   protected void generateMethodSummaryReport(List<ISuite> suites) {
     m_methodIndex = 0;
     startResultSummaryTable();
@@ -122,7 +126,11 @@ public class EmailableReporter implements IReporter {
     m_out.println("</table>");
   }
 
-  /** Creates a section showing known results for each method */
+  /**
+   * Creates a section showing known results for each method
+   *
+   * @param suites All suites
+   */
   protected void generateMethodDetailReport(List<ISuite> suites) {
     m_methodIndex = 0;
     for (ISuite suite : suites) {
@@ -479,11 +487,10 @@ public class EmailableReporter implements IReporter {
     m_row = 0;
   }
 
-  /** Starts HTML stream */
   protected void startHtml(PrintWriter out) {
     out.println(
-        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">");
-    out.println("<html xmlns=\"http://www.w3.org/1999/xhtml\">");
+        "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\" \"https://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">");
+    out.println("<html xmlns=\"https://www.w3.org/1999/xhtml\">");
     out.println("<head>");
     out.println("<meta charset='utf-8'>");
     out.println("<title>TestNG Report</title>");
@@ -509,7 +516,6 @@ public class EmailableReporter implements IReporter {
     out.println("<body>");
   }
 
-  /** Finishes HTML stream */
   protected void endHtml(PrintWriter out) {
     out.println("</body></html>");
   }

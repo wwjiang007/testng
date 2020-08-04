@@ -36,7 +36,7 @@ public class XMLStringBuffer {
 
   /**
    * @param start A string of spaces indicating the indentation at which to start the generation.
-   *     This constructor will not insert an <?xml prologue.
+   *     This constructor will not insert an <code>&lt;?xml</code> prologue.
    */
   public XMLStringBuffer(String start) {
     init(Buffer.create(), start);
@@ -259,7 +259,7 @@ public class XMLStringBuffer {
   }
 
   /**
-   * Add an empty element tag (e.g. <foo/>)
+   * Add an empty element tag (e.g. <code>&lt;foo/&gt;</code>)
    *
    * @param tagName The name of the tag
    */
@@ -268,7 +268,7 @@ public class XMLStringBuffer {
   }
 
   /**
-   * Add an empty element tag (e.g. <foo/>)
+   * Add an empty element tag (e.g. <code>&gt;foo/&lt;</code>)
    *
    * @param tagName The name of the tag
    * @param attributes A Properties file containing the attributes (or null)
@@ -297,7 +297,6 @@ public class XMLStringBuffer {
     this.defaultComment = defaultComment;
   }
 
-  /** Add a CDATA tag. */
   public void addCDATA(String content) {
     if (content != null) {
       // Solution from https://coderanch.com/t/455930/java/Remove-control-characters
@@ -309,7 +308,7 @@ public class XMLStringBuffer {
     } else if (!content.contains("]]>")) {
       m_buffer.append("<![CDATA[").append(content).append("]]>");
     } else if ("]]>".equals(content)) {
-      // Solution from http://stackoverflow.com/q/223652/4234729
+      // Solution from https://stackoverflow.com/q/223652/4234729
       m_buffer.append("<![CDATA[]]]]><![CDATA[>]]>");
     } else { // content contains "]]>"
       String[] subStrings = content.split("]]>");

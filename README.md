@@ -1,21 +1,27 @@
-[![Build Status](http://img.shields.io/travis/cbeust/testng.svg)](https://travis-ci.org/cbeust/testng)
+[![Build Status](https://img.shields.io/travis/cbeust/testng.svg)](https://travis-ci.org/cbeust/testng)
 [![Maven Central](https://img.shields.io/maven-central/v/org.testng/testng.svg)](https://maven-badges.herokuapp.com/maven-central/org.testng/testng)
 [![Bintray](https://api.bintray.com/packages/cbeust/maven/testng/images/download.svg)](https://bintray.com/cbeust/maven/testng/_latestVersion)
 [![License](https://img.shields.io/github/license/cbeust/testng.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Sonarqube tech debt](https://img.shields.io/sonar/https/sonarqube.com/org.testng:testng/tech_debt.svg?label=Sonarqube%20tech%20debt)](https://sonarqube.com/dashboard/index?id=org.testng:testng)
 [![Sonarqube Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=org.testng%3Atestng&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.testng%3Atestng)
 
-Documentation available at [TestNG's main web site](http://testng.org).
+Documentation available at [TestNG's main web site](https://testng.org).
+
+### Release Notes
+
+* [7.3.0](https://groups.google.com/forum/#!topic/testng-users/a81uaZvtEZI)
+* [7.1.0](https://groups.google.com/forum/#!topic/testng-users/84bYPJ1rjno)
+* [7.0.0](https://groups.google.com/forum/#!topic/testng-users/HKujuefBhXA)
 
 ### Need help?
 Before opening a new issue, did you ask your question on
-* [Google group](http://groups.google.com/group/testng-users)
-* [StackOverflow](http://stackoverflow.com/questions/tagged/testng)
+* [Google group](https://groups.google.com/group/testng-users)
+* [StackOverflow](https://stackoverflow.com/questions/tagged/testng)
 
 If you posted on both sites, please provide the link to the other question to avoid duplicating the answer.
 
 ### Are you sure it is a TestNG bug?
-Before posting the issue, try to reproduce the issue in [a shell window](http://testng.org/doc/documentation-main.html#running-testng).
+Before posting the issue, try to reproduce the issue in [a shell window](https://testng.org/doc/documentation-main.html#running-testng).
 
 If the problem does not exist with the shell, first check if the issue exists on the bugtracker of the runner, and open an issue there first:
 * Eclipse: https://github.com/cbeust/testng-eclipse/issues

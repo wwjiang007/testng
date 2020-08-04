@@ -12,6 +12,7 @@ import org.testng.ITestContext;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 import org.testng.TestNGException;
+import org.testng.internal.InvokeMethodRunnable.TestNGRuntimeException;
 import org.testng.internal.annotations.IAnnotationFinder;
 import org.testng.internal.collections.ArrayIterator;
 import org.testng.internal.collections.OneToTwoDimArrayIterator;
@@ -35,9 +36,6 @@ import java.util.List;
 
 /**
  * Collections of helper methods to help deal with invocation of TestNG methods
- *
- * @author Cedric Beust <cedric@beust.com>
- * @author nullin <nalin.makar * gmail.com>
  */
 public class MethodInvocationHelper {
 
@@ -238,6 +236,8 @@ public class MethodInvocationHelper {
           public void runTestMethod(ITestResult tr) {
             try {
               invokeMethod(thisMethod, testInstance, parameters);
+              error[0] = null;
+              tr.setThrowable(null);
             } catch (Throwable t) {
               error[0] = t;
               tr.setThrowable(t); // make Throwable available to IHookable
@@ -328,7 +328,11 @@ public class MethodInvocationHelper {
       }
     } catch (Exception ex) {
       if (notTimedout) {
-        testResult.setThrowable(ex.getCause());
+        Throwable e = ex.getCause();
+        if (e instanceof TestNGRuntimeException) {
+          e = e.getCause();
+        }
+        testResult.setThrowable(e);
       } else {
         ThreadTimeoutException exception =
             new ThreadTimeoutException(
@@ -402,6 +406,8 @@ public class MethodInvocationHelper {
           public void runConfigurationMethod(ITestResult tr) {
             try {
               invokeMethod(thisMethod, instance, parameters);
+              error[0] = null;
+              tr.setThrowable(null);
             } catch (Throwable t) {
               error[0] = t;
               tr.setThrowable(t); // make Throwable available to IConfigurable

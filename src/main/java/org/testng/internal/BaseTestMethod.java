@@ -6,13 +6,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
-
 import org.testng.IClass;
 import org.testng.IRetryAnalyzer;
 import org.testng.ITestClass;
@@ -760,34 +758,19 @@ public abstract class BaseTestMethod implements ITestNGMethod {
 
   private IRetryAnalyzer getRetryAnalyzerConsideringMethodParameters(ITestResult tr) {
     Object[] key = tr.getParameters();
-    boolean relyOnParametersToBeUsedAsKeys = relyOnParametersToBeUsedAsKeys(key);
     IRetryAnalyzer retryAnalyzer = this.m_retryAnalyzer;
-    if (key.length != 0 && retryAnalyzer != null && relyOnParametersToBeUsedAsKeys) {
-      String keyAsString = getMethodName() + "_" + Arrays.toString(key);
-      retryAnalyzer = m_testMethodToRetryAnalyzer.computeIfAbsent(keyAsString,
-          o -> InstanceCreator.newInstance(this.m_retryAnalyzer.getClass()));
+    if (key != null && key.length != 0 && retryAnalyzer != null) {
+      final String keyAsString = getSimpleName() + "#" + getParameterInvocationCount();
+      final IRetryAnalyzer currentRetryAnalyzerInMap = m_testMethodToRetryAnalyzer.get(keyAsString);
+      if (currentRetryAnalyzerInMap == null || currentRetryAnalyzerInMap.getClass() != retryAnalyzer.getClass()) {
+        retryAnalyzer = m_testMethodToRetryAnalyzer.compute(
+                keyAsString,
+                (s, ra) -> InstanceCreator.newInstance(this.m_retryAnalyzer.getClass()));
+      } else {
+        retryAnalyzer = currentRetryAnalyzerInMap;
+      }
     }
     return retryAnalyzer;
-  }
-
-  private static final List<Class<?>> EXCLUSION_CLASSES = Arrays.asList(
-      String.class,
-      Integer.class,
-      Long.class,
-      Boolean.class,
-      Double.class,
-      Float.class,
-      Character.class
-  );
-
-  private static boolean relyOnParametersToBeUsedAsKeys(Object[] keys) {
-    if (keys == null) {
-      return false;
-    }
-    return Arrays.stream(keys)
-        .filter(Objects::nonNull)
-        .map(Object::getClass)
-        .anyMatch(EXCLUSION_CLASSES::contains);
   }
 
 }

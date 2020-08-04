@@ -136,7 +136,7 @@ public class Parameters {
   }
 
   /**
-   * Creates the parameters needed for the specified <tt>@Configuration</tt> <code>Method</code>.
+   * Creates the parameters needed for the specified <code>@Configuration</code> <code>Method</code>.
    *
    * @param m the configuraton method
    * @param currentTestMethod the current @Test method or <code>null</code> if no @Test is available
@@ -249,11 +249,7 @@ public class Parameters {
 
     for (int i = 0; i < parameterNames.length; i++) {
       String p = parameterNames[i];
-      String value = params.xmlParameters.get(p);
-      if (null == value) {
-        // try SysEnv entries
-        value = System.getProperty(p);
-      }
+      String value = System.getProperty(p, params.xmlParameters.get(p));
       if (null == value) {
         if (optionalValues != null) {
           value = optionalValues[i];
@@ -441,7 +437,7 @@ public class Parameters {
         throw new TestNGException(
             errPrefix
                 + ".\nFor more information on native dependency injection please refer to "
-                + "http://testng.org/doc/documentation-main.html#native-dependency-injection");
+                + "https://testng.org/doc/documentation-main.html#native-dependency-injection");
       }
     }
 
@@ -729,7 +725,7 @@ public class Parameters {
 
   /**
    * If the method has parameters, fill them in. Either by using a @DataProvider if any was
-   * provided, or by looking up <parameters> in testng.xml
+   * provided, or by looking up <code>&lt;parameters&gt;</code> in testng.xml
    *
    * @return An Iterator over the values for each parameter of this method.
    */
@@ -755,7 +751,7 @@ public class Parameters {
 
   /**
    * If the method has parameters, fill them in. Either by using a @DataProvider if any was
-   * provided, or by looking up <parameters> in testng.xml
+   * provided, or by looking up <code>&lt;parameters&gt;</code> in testng.xml
    *
    * @return An Iterator over the values for each parameter of this method.
    */
