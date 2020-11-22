@@ -66,7 +66,6 @@ import org.testng.xml.internal.XmlSuiteUtils;
 import static org.testng.internal.Utils.defaultIfStringEmpty;
 import static org.testng.internal.Utils.isStringEmpty;
 import static org.testng.internal.Utils.isStringNotEmpty;
-import static org.testng.xml.XmlSuite.ParallelMode.skipDeprecatedValues;
 
 /**
  * This class is the main entry point for running tests in the TestNG framework. Users can create
@@ -165,9 +164,9 @@ public class TestNG {
   private String m_defaultSuiteName = DEFAULT_COMMAND_LINE_SUITE_NAME;
   private String m_defaultTestName = DEFAULT_COMMAND_LINE_TEST_NAME;
 
-  private Map<String, Integer> m_methodDescriptors = Maps.newHashMap();
+  private final Map<String, Integer> m_methodDescriptors = Maps.newHashMap();
 
-  private Set<XmlMethodSelector> m_selectors = Sets.newLinkedHashSet();
+  private final Set<XmlMethodSelector> m_selectors = Sets.newLinkedHashSet();
 
   private ITestObjectFactory m_objectFactory;
 
@@ -202,6 +201,9 @@ public class TestNG {
   /** Default constructor. Setting also usage of default listeners/reporters. */
   public TestNG() {
     init(true);
+    if (RuntimeBehavior.isMemoryFriendlyMode()) {
+      Logger.getLogger(TestNG.class).warn("TestNG is running in memory friendly mode.");
+    }
   }
 
   /**
@@ -419,15 +421,11 @@ public class TestNG {
   @Deprecated
   // TODO: krmahadevan: This method is being used by Gradle. Removal causes build failures.
   public void setParallel(String parallel) {
-    if (parallel == null) {
-      setParallel(XmlSuite.ParallelMode.NONE);
-    } else {
-      setParallel(XmlSuite.ParallelMode.getValidParallel(parallel));
-    }
+    setParallel(XmlSuite.ParallelMode.getValidParallel(parallel));
   }
 
   public void setParallel(XmlSuite.ParallelMode parallel) {
-    m_parallelMode = skipDeprecatedValues(parallel);
+    m_parallelMode = parallel;
   }
 
   public void setCommandLineSuite(XmlSuite suite) {
@@ -672,12 +670,8 @@ public class TestNG {
 
   private static <E> void maybeAddListener(
       Map<Class<? extends E>, E> map, Class<? extends E> type, E value, boolean quiet) {
-    if (map.containsKey(type)) {
-      if (!quiet) {
-        LOGGER.warn("Ignoring duplicate listener : " + type.getName());
-      }
-    } else {
-      map.put(type, value);
+    if (map.putIfAbsent(type, value) != null && !quiet) {
+      LOGGER.warn("Ignoring duplicate listener : " + type.getName());
     }
   }
 
@@ -765,7 +759,7 @@ public class TestNG {
 
   private Boolean m_skipFailedInvocationCounts = false;
 
-  private List<IMethodInterceptor> m_methodInterceptors = Lists.newArrayList();
+  private final List<IMethodInterceptor> m_methodInterceptors = Lists.newArrayList();
 
   /** The list of test names to run from the given suite */
   private List<String> m_testNames;
@@ -1880,7 +1874,7 @@ public class TestNG {
   //
 
   private URLClassLoader m_serviceLoaderClassLoader;
-  private Map<Class<? extends ITestNGListener>, ITestNGListener> serviceLoaderListeners =
+  private final Map<Class<? extends ITestNGListener>, ITestNGListener> serviceLoaderListeners =
       Maps.newHashMap();
 
   /*

@@ -1,5 +1,5 @@
 object This {
-    val version = "7.1.1-SNAPSHOT"
+    val version = "7.4.0-SNAPSHOT"
     val artifactId = "testng"
     val groupId = "org.testng"
     val description = "Testing framework for Java"
@@ -33,6 +33,25 @@ buildscript {
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+
+    // use gradle feature
+    // in order to optionally exposed transitive dependency
+
+    registerFeature("ant") {
+        usingSourceSet(sourceSets["main"])
+    }
+
+    registerFeature("guice") {
+        usingSourceSet(sourceSets["main"])
+    }
+
+    registerFeature("junit") {
+        usingSourceSet(sourceSets["main"])
+    }
+
+    registerFeature("yaml") {
+        usingSourceSet(sourceSets["main"])
+    }
 }
 
 repositories {
@@ -52,19 +71,32 @@ plugins {
 }
 
 dependencies {
+
+    listOf("org.apache.ant:ant:1.10.9").forEach {
+        "antApi"(it)
+    }
+
+    listOf("com.google.inject:guice:4.2.2:no_aop").forEach {
+        "guiceApi"(it)
+    }
+
+    listOf("junit:junit:4.12").forEach {
+        "junitApi"(it)
+    }
+
+    listOf("org.yaml:snakeyaml:1.21").forEach {
+        "yamlApi"(it)
+    }
+
     listOf("com.google.code.findbugs:jsr305:3.0.1").forEach {
         compileOnly(it)
     }
 
-    listOf("com.beust:jcommander:1.78",
-            "org.apache.ant:ant:1.10.3",
-            "junit:junit:4.12",
-            "com.google.inject:guice:4.2.2:no_aop",
-            "org.yaml:snakeyaml:1.21").forEach {
+    listOf("com.beust:jcommander:1.78").forEach {
         api(it)
     }
 
-    listOf("org.apache.ant:ant-testutil:1.10.3",
+    listOf("org.apache.ant:ant-testutil:1.10.9",
             "org.assertj:assertj-core:3.10.0",
             "org.codehaus.groovy:groovy-all:2.4.7",
             "org.spockframework:spock-core:1.0-groovy-2.4",
@@ -81,6 +113,7 @@ tasks.jar {
         attributes(
             "Bundle-License" to "https://apache.org/licenses/LICENSE-2.0",
             "Bundle-Description" to "TestNG is a testing framework.",
+            "Bundle-Version" to This.version,
             "Import-Package" to """
                 "bsh.*;version="[2.0.0,3.0.0)";resolution:=optional",
                 "com.beust.jcommander.*;version="[1.7.0,3.0.0)";resolution:=optional",
@@ -136,8 +169,8 @@ sonarqube {
 //
 
 bintray {
-    user = project.findProperty("bintrayUser")?.toString()
-    key = project.findProperty("bintrayApiKey")?.toString()
+    user = project.findProperty("bintrayUser")?.toString() ?: System.getenv("BINTRAY_USER")
+    key = project.findProperty("bintrayApiKey")?.toString() ?: System.getenv("BINTRAY_API_KEY")
     dryRun = false
     publish = true
 
@@ -177,6 +210,7 @@ with(publishing) {
             afterEvaluate {
                 from(components["java"])
             }
+            suppressAllPomMetadataWarnings()
             artifact(sourcesJar)
             artifact(javadocJar)
             pom {
@@ -200,7 +234,7 @@ with(publishing) {
                         email.set("cedric@beust.com")
                     }
                     developer {
-                        id.set("jherr")
+                        id.set("juherr")
                         name.set("Julien Herr")
                         email.set("julien@herr.fr")
                     }
@@ -225,8 +259,8 @@ with(publishing) {
                 uri("https://oss.sonatype.org/content/repositories/snapshots/") else
                 uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = project.findProperty("sonatypeUser") as? String
-                password = project.findProperty("sonatypePassword") as? String
+                username = project.findProperty("sonatypeUser")?.toString() ?: System.getenv("SONATYPE_USER")
+                password = project.findProperty("sonatypePassword")?.toString() ?: System.getenv("SONATYPE_PASSWORD")
             }
         }
         maven {

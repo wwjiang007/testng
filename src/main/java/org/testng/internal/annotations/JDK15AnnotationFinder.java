@@ -3,7 +3,11 @@ package org.testng.internal.annotations;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.testng.IAnnotationTransformer;
@@ -24,10 +28,12 @@ import org.testng.annotations.IAnnotation;
 import org.testng.annotations.IConfigurationAnnotation;
 import org.testng.annotations.IDataProviderAnnotation;
 import org.testng.annotations.IFactoryAnnotation;
+import org.testng.annotations.IIgnoreAnnotation;
 import org.testng.annotations.IListenersAnnotation;
 import org.testng.annotations.IObjectFactoryAnnotation;
 import org.testng.annotations.IParametersAnnotation;
 import org.testng.annotations.ITestAnnotation;
+import org.testng.annotations.Ignore;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.ObjectFactory;
 import org.testng.annotations.Optional;
@@ -57,6 +63,7 @@ public class JDK15AnnotationFinder implements IAnnotationFinder {
     m_annotationMap.put(IObjectFactoryAnnotation.class, ObjectFactory.class);
     m_annotationMap.put(IParametersAnnotation.class, Parameters.class);
     m_annotationMap.put(ITestAnnotation.class, Test.class);
+    m_annotationMap.put(IIgnoreAnnotation.class, Ignore.class);
     // internal
     m_annotationMap.put(IBeforeSuite.class, BeforeSuite.class);
     m_annotationMap.put(IAfterSuite.class, AfterSuite.class);
@@ -216,6 +223,43 @@ public class JDK15AnnotationFinder implements IAnnotationFinder {
         null,
         new Pair<>(annotation, cons),
         null);
+  }
+
+  @Override
+  public <A extends IAnnotation> List<A> findInheritedAnnotations(Class<?> cls, Class<A> annotationClass) {
+    Objects.requireNonNull(cls, "Cannot retrieve annotations from a null class.");
+    Objects.requireNonNull(annotationClass, "Cannot work with a null annotation");
+    final Class<? extends Annotation> a = m_annotationMap.get(annotationClass);
+    if (a == null) {
+      throw new IllegalArgumentException(
+              "Java @Annotation class for '" + annotationClass + "' not found.");
+    }
+    List<A> annotations = new ArrayList<>();
+    if (!a.equals(org.testng.annotations.Listeners.class)) {
+      return Collections.emptyList();
+    }
+
+    for (Class<?> inter : cls.getInterfaces()) {
+      findSuperInterface(cls, inter, annotationClass, a, annotations);
+    }
+    return annotations;
+  }
+
+  private <A extends IAnnotation> void findSuperInterface(Class<?> cls, Class<?> inter, Class<A> annotationClass, Class<? extends Annotation> a, List<A> annotations) {
+    if (inter.getAnnotation(a) != null) {
+      annotations.add(findAnnotation(
+              cls,
+              inter.getAnnotation(a),
+              annotationClass,
+              cls,
+              null,
+              null,
+              new Pair<>(inter.getAnnotation(a), annotationClass),
+              null));
+    }
+    for (Class<?> superInterface : inter.getInterfaces()) {
+      findSuperInterface(cls, superInterface, annotationClass, a, annotations);
+    }
   }
 
   private <A extends IAnnotation> A findAnnotation(

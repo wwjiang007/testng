@@ -1,4 +1,24 @@
 Current
+Fixed: GITHUB-2419: TestNG JUnit reports are not valid if system output contains XML tags (Lorenzo Orsatti)
+Fixed: GITHUB-188: suite parallel="methods" does not work when there are multiple <test> tags in the testng.xml (Krishnan Mahadevan)
+Fixed: GITHUB-346: When a method is annotated with both BeforeGroups and AfterGroups only AfterGroup is executed (Krishnan Mahadevan)
+Fixed: GITHUB-2403: Suite.xml files attempt to make web request when suite references standard TestNG DTD using HTTP (Krishnan Mahadevan)
+New:   GITHUB-2385: Make @Listeners can work for implemented interfaces and Inherited class (Nan Liang)
+Fixed: GITHUB-2053: MethodHelper.collectAndOrderMethods() Hangs when Parallel Instance and dependsOnGroups (Krishnan Mahadevan)
+Fixed: GITHUB-2400: BeforeClass/Method (and AfterClass/Method) configuration methods that override default methods are invoked multiple times (Krishnan Mahadevan)
+Fixed: GITHUB-2396: @Ignore on method level doesn't work as expected (Krishnan Mahadevan)
+Fixed: GITHUB-2382: TestNG version should be specified in MANIFEST.MF (Krishnan Mahadevan)
+Fixed: GITHUB-2096: 7.0.0-beta6 memory issues (regression) (Krishnan Mahadevan)
+Fixed: GITHUB-2355: TestNG creates multiple Guice Module Instances (Krishnan Mahadevan)
+Fixed: GITHUB-2374: Add file name to the warning message (Krishnan Mahadevan)
+Fixed: GITHUB-2321: -Dtestng.thread.affinity=true do not work when running multiple instance of test in parallel (Nan Liang)
+Fixed: GITHUB-2363: JS error when switching theme (Krishnan Mahadevan)
+Fixed: GITHUB-2361: No way to enforce @Test(singleThreaded = true) when test defined in base class (Krishnan Mahadevan)
+Fixed: GITHUB-2343: Injectors are not reused when they share the same set of modules (Krishnan Mahadevan)
+Fixed: GITHUB-2346: ITestResult attributes are null when retrieved by Listener onTestStart if test fails at BeforeMethod (Krishnan Mahadevan)
+Fixed: GITHUB-2357: TestNG 7.3.0 transitive dependencies
+
+7.3.0
 Fixed: GITHUB-2328: Add ability to get test method for which configuration method was called (Krishnan Mahadevan)
 Fixed: GITHUB-2327: Parameters not present on skipped Test (Eric Kubenka)
 Fixed: GITHUB-2232: Null Pointer Exception in ConfigInvoker.setMethodInvocationFailure (Krishnan Mahadevan)

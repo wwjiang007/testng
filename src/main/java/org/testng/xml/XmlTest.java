@@ -7,8 +7,6 @@ import org.testng.collections.Maps;
 
 import java.util.*;
 
-import static org.testng.xml.XmlSuite.ParallelMode.skipDeprecatedValues;
-
 /** This class describes the tag &lt;test&gt; in testng.xml. */
 public class XmlTest implements Cloneable {
 
@@ -353,16 +351,11 @@ public class XmlTest implements Cloneable {
   }
 
   public void setParallel(XmlSuite.ParallelMode parallel) {
-    m_parallel = skipDeprecatedValues(parallel);
+    m_parallel = parallel;
   }
 
   public XmlSuite.ParallelMode getParallel() {
-    XmlSuite.ParallelMode result = getSuite().getParallel();
-    if (null != m_parallel) {
-      result = m_parallel;
-    }
-
-    return result;
+    return Optional.ofNullable(m_parallel).orElse(getSuite().getParallel());
   }
 
   public String getTimeOut() {

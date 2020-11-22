@@ -6,6 +6,7 @@
   <suite-files>
     <suite-file path="./junit-suite.xml" />
     <suite-file path="./parent-module-suite.xml" />
+    <suite-file path="./188.xml"/>
   </suite-files>
 
   <listeners>
@@ -99,6 +100,7 @@
       <class name="test.mannotation.MAnnotation2SampleTest" />
       <class name="test.mannotation.issue1976.IssueTest" />
       <class name="test.thread.FactoryTest" />
+      <class name="test.thread.issue2361.IssueTest"/>
       <class name="test.thread.SequentialTest" />
       <class name="test.thread.ParallelTestTest" />
       <class name="test.thread.DataProviderThreadPoolSizeTest" />
@@ -130,6 +132,7 @@
       <class name="test.testng285.TestNG285Test" />
       <class name="test.failedreporter.FailedReporterTest" />
       <class name="test.attributes.AttributeTest"/>
+      <class name="test.attributes.issue2346.IssueTest"/>
       <class name="test.verify.VerifyTest"/>
       <class name="test.abstractconfmethod.C" />
       <class name="test.preserveorder.PreserveOrderTest" />
@@ -235,6 +238,7 @@
       <class name="test.listeners.github1130.GitHub1130Test"/>
       <class name="test.listeners.github1296.GitHub1296Test"/>
       <class name="test.listeners.github1465.IssueTest"/>
+      <class name="test.listeners.github2385.IssueTest"/>
     </classes>
   </test>
 
@@ -848,6 +852,7 @@
       <class name="test.configuration.SingleConfigurationTest" />
       <class name="test.configuration.github1625.TestRunnerIssue1625"/>
       <class name="test.configuration.issue1753.IssueTest"/>
+      <class name="test.configuration.issue2400.IssueTest"/>
       <class name="test.configuration.BeforeClassTest"/>
       <class name="test.configuration.issue2209.IssueTest"/>
       <class name="test.configuration.issue2254.IssueTest"/>
@@ -953,8 +958,7 @@
 
   <test name="threadAffinity">
     <classes>
-      <class name="test.thread.parallelization.issue1773.IssueTest"/>
-      <class name="test.thread.parallelization.issue2110.IssueTest"/>
+      <class name="test.thread.parallelization.ThreadAffinityTest"/>
     </classes>
   </test>
 

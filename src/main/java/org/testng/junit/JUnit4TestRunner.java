@@ -11,6 +11,7 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
 import org.testng.*;
 import org.testng.collections.Lists;
+import org.testng.internal.IInvocationStatus;
 import org.testng.internal.ITestResultNotifier;
 import org.testng.internal.InvokedMethod;
 import org.testng.internal.TestResult;
@@ -220,7 +221,7 @@ public class JUnit4TestRunner implements IJUnitTestRunner {
 
     private void runAfterInvocationListeners(ITestResult tr) {
       InvokedMethod im =
-          new InvokedMethod(tr.getTestClass(), tr.getMethod(), tr.getEndMillis(), tr);
+          new InvokedMethod(tr.getEndMillis(), tr);
       for (IInvokedMethodListener l : m_invokeListeners) {
         l.afterInvocation(im, tr);
       }
@@ -244,9 +245,10 @@ public class JUnit4TestRunner implements IJUnitTestRunner {
 
     TestResult tr = TestResult.newTestResultFor(tm);
 
-    InvokedMethod im =
-        new InvokedMethod(tr.getTestClass(), tr.getMethod(), tr.getStartMillis(), tr);
-    m_parentRunner.addInvokedMethod(im);
+    InvokedMethod im = new InvokedMethod(tr.getStartMillis(), tr);
+    if (tr.getMethod() instanceof IInvocationStatus) {
+      ((IInvocationStatus) tr.getMethod()).setInvokedAt(im.getDate());
+    }
     for (IInvokedMethodListener l : m_invokeListeners) {
       l.beforeInvocation(im, tr);
     }

@@ -1,6 +1,7 @@
 package org.testng.annotations;
 
 import org.testng.IRetryAnalyzer;
+import org.testng.internal.annotations.DisabledRetryAnalyzer;
 import org.testng.internal.annotations.IDataProvidable;
 
 /**
@@ -74,20 +75,9 @@ public interface ITestAnnotation extends ITestOrConfiguration, IDataProvidable {
 
   void setDataProviderClass(Class<?> v);
 
-  /**
-   * @deprecated - This method stands deprecated as of TestNG 7.0.0.
-   * Please use {{@link #getRetryAnalyzerClass()}} instead.
-   *
-   * @return The retry analyzer
-   */
-  @Deprecated
-  IRetryAnalyzer getRetryAnalyzer();
-
   void setRetryAnalyzer(Class<? extends IRetryAnalyzer> c);
 
-  default Class<? extends IRetryAnalyzer> getRetryAnalyzerClass() {
-    return getRetryAnalyzer().getClass();
-  }
+  Class<? extends IRetryAnalyzer> getRetryAnalyzerClass();
 
   boolean skipFailedInvocations();
 

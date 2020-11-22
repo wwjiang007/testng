@@ -279,7 +279,7 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
             arguments.getInstance()) && !alwaysRun) {
           log(3, "Skipping " + Utils.detailedMethodName(tm, true));
           InvokedMethod invokedMethod =
-              new InvokedMethod(arguments.getInstance(), tm, System.currentTimeMillis(), testResult);
+              new InvokedMethod(System.currentTimeMillis(), testResult);
           runInvokedMethodListeners(BEFORE_INVOCATION, invokedMethod, testResult);
           testResult.setStatus(ITestResult.SKIP);
           runInvokedMethodListeners(AFTER_INVOCATION, invokedMethod, testResult);
@@ -346,10 +346,12 @@ class ConfigInvoker extends BaseInvoker implements IConfigInvoker {
     tm.setId(ThreadUtil.currentThreadInfo());
 
     InvokedMethod invokedMethod =
-        new InvokedMethod(targetInstance, tm, System.currentTimeMillis(), testResult);
+        new InvokedMethod(System.currentTimeMillis(), testResult);
 
     runInvokedMethodListeners(BEFORE_INVOCATION, invokedMethod, testResult);
-    m_notifier.addInvokedMethod(invokedMethod);
+    if (tm instanceof IInvocationStatus) {
+      ((IInvocationStatus) tm).setInvokedAt(invokedMethod.getDate());
+    }
     try {
       Reporter.setCurrentTestResult(testResult);
       ConstructorOrMethod method = tm.getConstructorOrMethod();
